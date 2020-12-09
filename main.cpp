@@ -38,7 +38,7 @@ int main()
     
     vector<Player> players;
     MegaDeck bigDeck;
-    WarPile warDeck;
+    
     int numDecks;
     int numPlayers;
     bool winner = false;
@@ -60,52 +60,78 @@ int main()
             bigDeck.add( deck );
         }
         //TODO Figure out why shuffle isn't working
-        bigDeck.shuffle( numDecks );
+        //bigDeck.shuffle( numDecks );
         //check MegaDeck
-        // for ( int i = 0; i < numDecks * 52; i ++ )
-        // {
-        //     bigDeck.megaPile.at(i).showCard();
-        // }
+        for ( int i = 0; i < numDecks * 52; i ++ )
+        {
+            bigDeck.megaPile.at(i).showCard();
+        }
+        //cout<<"seg fault1"<<endl;
     }
-    
     cout<<"Enter number of players: ";
     cin>>numPlayers;
-    cout<<"Enter number of players: ";
+    for ( int i = 0; i < numPlayers; i ++ )
+    {
+        Player newPlayer = Player();
+        players.push_back( newPlayer );
+    }
+    
     
     //TODO Split up megadeck to give each player cards
-    int numCardsPerPlayer = (numDecks * 52) / numPlayers;
-    cout<<"Enter number of players: ";
+    int numCardsPerPlayer = ((numDecks * 52) / numPlayers) - 1;
+    cout<<"numCardsPerPlayer "<<numCardsPerPlayer<<endl;
+    //cout<<"Enter number of players: ";
     int itr = 0;
+    //cout<<"Enter number of players: ";
     int curPlayerIndex = 0;
-    cout<<"Enter number of players: ";
-    for ( int i = 0; i < bigDeck.megaPile.size(); i++)
+    
+    for ( int i = 0; i < numDecks * 52; i++)
     {
-        //cout<<"Enter number of players: ";
-        // Player newPlayer = Player();
-        // players.push_back( newPlayer );
-        if ( itr < numCardsPerPlayer )
+        //cout<<"GHHplayers: "<<players.at( curPlayerIndex ).pile.size()<<" "<<curPlayerIndex<<endl;
+    
+        if ( itr < numCardsPerPlayer  )
         {
-            players[i].add( bigDeck.Remove() );
+            players.at( curPlayerIndex ).add( bigDeck.Remove() );
             itr ++;
             
         }
         else if ( itr == numCardsPerPlayer )
         {
+            
             curPlayerIndex++;
-            itr = 0;
+            if ( curPlayerIndex < numPlayers )
+            {
+                 itr = 0;
+                //cout<<"Gplayers: "<<players.at( curPlayerIndex ).pile.size()<<" "<<curPlayerIndex<<endl;
+                players.at( curPlayerIndex ).add( bigDeck.Remove() );
+            }
         }
     }
 
-    
-    //players lose when they have no cards left
+    //cout<<"Enter number of players: ";
+    WarPile warDeck;
+    // //players lose when they have no cards left
     while ( !winner )
     {
         // players each draw card
-        // for ( int i = 0; i < numPlayers; i++)
-        // {
-        //     warDeck.add( players.at(i).Remove() ) ;
-        // }
-        // compare cards
+        bool winnerOfBattle = false;
+        while ( !winnerOfBattle )
+        {
+            for ( int i = 0; i < numPlayers; i++)
+            {
+                cout<<"FR "<<i<<endl;
+                warDeck.add( players.at(i).Remove() ) ;
+            }
+            // compare cards
+            //cout<<<<endl;
+            if ( warDeck.compare() != -1 )
+            {
+                winnerOfBattle = true;
+            }
+        }
+        
+        exit(0);
+        
         // add battles to all players and wins to other players
         // print out results
         // end over when all players cards =0  or when all but one players cards equal 0
