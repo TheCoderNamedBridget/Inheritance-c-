@@ -41,6 +41,8 @@ void printEndResults ( vector<Player> players );
 
 void playersAddCardWarPile( int &numPlayers, vector<Player> &players, WarPile &warDeck );
 
+void updatePlayerStats( int indexOfWinner, vector<Player> &players, WarPile &warDeck );
+
 int main()
 {
     vector<Player> players;
@@ -72,8 +74,6 @@ int main()
     
     for ( int i = 0; i < numDecks * 52; i++)
     {
-        //cout<<"GHHplayers: "<<players.at( curPlayerIndex ).pile.size()<<" "<<curPlayerIndex<<endl;
-    
         if ( itr < numCardsPerPlayer  )
         {
             players.at( curPlayerIndex ).add( bigDeck.Remove() );
@@ -86,14 +86,12 @@ int main()
             curPlayerIndex++;
             if ( curPlayerIndex < numPlayers )
             {
-                 itr = 0;
-                //cout<<"Gplayers: "<<players.at( curPlayerIndex ).pile.size()<<" "<<curPlayerIndex<<endl;
+                itr = 0;
                 players.at( curPlayerIndex ).add( bigDeck.Remove() );
             }
         }
     }
 
-    //cout<<"Enter number of players: ";
     WarPile warDeck;
     // //players lose when they have no cards left
     while ( !winner )
@@ -103,13 +101,14 @@ int main()
         
         while ( !winnerOfBattle )
         {
-            playersAddCardWarPile( numPlayers, players, warDeck);
-            
-            if ( warDeck.warPile.size() == 0 || numPlayers == 0)
+            for ( int i = 0; i < players.size(); i ++ )
             {
-                cout<<"done "<<endl;
-                
-                return 0;
+                cout<<"PLAY "<<players.at(i).cardsInHand<<endl;
+            }
+            playersAddCardWarPile( numPlayers, players, warDeck);
+            for ( int i = 0; i < players.size(); i ++ )
+            {
+                cout<<"PLAY2 "<<players.at(i).cardsInHand<<endl;
             }
             if ( warDeck.warPile.size() == 1 )
             {
@@ -118,49 +117,75 @@ int main()
                 return 0;
                 //declare winner
             }
+            if ( warDeck.warPile.size() == 0 || numPlayers == 0)
+            {
+                cout<<"done "<<endl;
+                
+                return 0;
+            }
             
-            LostFoundPile bin;
+            
+            LostFoundPile lostFound;
             // compare cards
-            int indexOfWinner = warDeck.compare();
-            if ( indexOfWinner != -1 )
+            
+            
+            
+            
+            if ( !repeatMax )
             {
-                // add battles to all players and wins to other players
-                for ( int i = 0; i < players.size(); i ++ )
+                int indexOfWinner = warDeck.compare();
+                cout<<"indexOfWinner "<<indexOfWinner<<endl;
+                if ( indexOfWinner != -1 )
                 {
-                    if ( i == indexOfWinner )
-                    {
-                        //cout<<"Player "<<i<<" won"<<endl;
-                        players.at(i).numBattlesWon++;
-                        for ( int i = 0; i < warDeck.warPile.size() ; i++ )
-                        {
-                            players.at(i).add( warDeck.Remove() );
-                        }
-                    }
-                    players.at(i).calculateFierceness();
-                    players.at(i).numBattlesPlayed++;
+                    // add battles to all players and wins to other players
+                    updatePlayerStats( indexOfWinner, players, warDeck );
                     
+                    winnerOfBattle = true;
                 }
-                winnerOfBattle = true;
+                // else if ( indexOfWinner == -1 ) 
+                // {
+                //     //put warDeck in lost and found pile
+                //     //play another battle
+                //     cout<<"winner = -1"<<endl;
+                //     for ( int i = 0; i < warDeck.warPile.size(); i++ )
+                //     {
+                //         lostFound.add( warDeck.Remove() );
+                //     }
+                // }
             }
-            else if ( indexOfWinner == -1 ) 
+            else //repeatMax == true
             {
-                //put warDeck in lost and found pile
-                //play another battle
-                for ( int i = 0; i < warDeck.warPile.size(); i++ )
-                {
-                    bin.add( warDeck.Remove() );
-                }
+                //TODO COME BACK AND FINISH the case for ties ]
+                //Place 3 cards duel 4th
+                //all cards go into lost and found besides dueling cards
+                //warPile
+                //players
+                int maxValue = findMaxCardValue();
+                vector<int> indicesOfMax = indicesOfMaxRepeats( maxValue );
+                //add all cards in warpile to lostfound deck
+                //players whose indices are not picked lostfound
+                //players whose indices were picked lay down 3 
+                //cards and then compare last crad
             }
-            cout<<"warDeck found"<<warDeck.warPile.size()<<endl;
-            cout<<"lostf found"<<bin.pile.size()<<endl;
+            
+            //cout<<"warDeck found"<<warDeck.warPile.size()<<endl;
+            //cout<<"lostf found"<<lostFound.pile.size()<<endl;
             // print out results
             printEndResults( players );
+            //return 0;
             
         }
     }
-
     return 0;
 }
+
+
+
+
+
+
+
+
 
 
 void buildBigDeck( int numDecks, MegaDeck &bigDeck )
@@ -185,17 +210,34 @@ void printEndResults ( vector<Player> players )
 
 void playersAddCardWarPile( int &numPlayers, vector<Player> &players, WarPile &warDeck )
 {
-    for ( int i = 0; i < numPlayers; i++)
+    for ( int i = 0; i < players.size(); i++)
     {
-        if ( players.at(i).pile.size() != 0 )//player is not out of cards
+        if ( players.at(i).cardsInHand != 0 )//player is not out of cards
         {
-            cout<<"FR "<<i<<endl;
             warDeck.add( players.at(i).Remove() ) ;
         }
         else
         {
-            cout<<"numPlayers-- found"<<endl;
             numPlayers--;
         }
+    }
+}
+
+void updatePlayerStats( int indexOfWinner, vector<Player> &players, WarPile &warDeck )
+{
+    for ( int i = 0; i < players.size(); i ++ )
+    {
+        if ( i == indexOfWinner )
+        {
+            players.at(i).numBattlesWon++;
+            int warPileSizeConst = warDeck.warPile.size();
+            for ( int f = 0; f < warPileSizeConst ; f++ )
+            {
+                players.at(i).add( warDeck.Remove() );
+            }
+        }
+        players.at(i).calculateFierceness();
+        players.at(i).numBattlesPlayed++;
+                    
     }
 }
