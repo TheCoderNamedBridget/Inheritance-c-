@@ -12,7 +12,10 @@ any other source. I further certify that I typed each and every line of code in 
 #include "Card.h"
 #include "MegaDeck.h"
 #include "WarPile.h"
+#include "LostFoundPile.h"
 #include "Deck.h"
+#include <iomanip>
+#include <string>
 #include <vector>
 #include <iostream>
 using namespace std;
@@ -32,10 +35,14 @@ a higher value they take the 10 cards if tie then go again
 if both or all players run out of cards in the battle then 
 the warpile does to the lot and found pile
 */
+void buildBigDeck( int numDecks, MegaDeck &bigDeck );
+
+void printEndResults ( vector<Player> players );
+
+void playersAddCardWarPile( int &numPlayers, vector<Player> &players, WarPile &warDeck );
+
 int main()
 {
-
-    
     vector<Player> players;
     MegaDeck bigDeck;
     
@@ -48,26 +55,9 @@ int main()
     
     if ( numDecks > 1 )
     {
-        
-        //cout<<"seg fault11"<<endl;
-        
-        //cout<<"seg fault22"<<endl;
-        for ( int i = 0; i < numDecks; i ++ )
-        {
-            //cout<<"seg fault1"<<endl;
-            Deck deck = Deck();
-            //deck.shuffle( 52, deck.pile );
-            bigDeck.add( deck );
-        }
-        //TODO Figure out why shuffle isn't working
-        //bigDeck.shuffle( numDecks );
-        //check MegaDeck
-        for ( int i = 0; i < numDecks * 52; i ++ )
-        {
-            bigDeck.megaPile.at(i).showCard();
-        }
-        //cout<<"seg fault1"<<endl;
+        buildBigDeck( numDecks, bigDeck );
     }
+    
     cout<<"Enter number of players: ";
     cin>>numPlayers;
     for ( int i = 0; i < numPlayers; i ++ )
@@ -76,13 +66,8 @@ int main()
         players.push_back( newPlayer );
     }
     
-    
-    //TODO Split up megadeck to give each player cards
     int numCardsPerPlayer = ((numDecks * 52) / numPlayers) - 1;
-    cout<<"numCardsPerPlayer "<<numCardsPerPlayer<<endl;
-    //cout<<"Enter number of players: ";
     int itr = 0;
-    //cout<<"Enter number of players: ";
     int curPlayerIndex = 0;
     
     for ( int i = 0; i < numDecks * 52; i++)
@@ -115,28 +100,102 @@ int main()
     {
         // players each draw card
         bool winnerOfBattle = false;
+        
         while ( !winnerOfBattle )
         {
-            for ( int i = 0; i < numPlayers; i++)
+            playersAddCardWarPile( numPlayers, players, warDeck);
+            
+            if ( warDeck.warPile.size() == 0 || numPlayers == 0)
             {
-                cout<<"FR "<<i<<endl;
-                warDeck.add( players.at(i).Remove() ) ;
+                cout<<"done "<<endl;
+                
+                return 0;
             }
-            // compare cards
-            //cout<<<<endl;
-            if ( warDeck.compare() != -1 )
+            if ( warDeck.warPile.size() == 1 )
             {
+                cout<<"winner found"<<endl;
+                
+                return 0;
+                //declare winner
+            }
+            
+            LostFoundPile bin;
+            // compare cards
+            int indexOfWinner = warDeck.compare();
+            if ( indexOfWinner != -1 )
+            {
+                // add battles to all players and wins to other players
+                for ( int i = 0; i < players.size(); i ++ )
+                {
+                    if ( i == indexOfWinner )
+                    {
+                        //cout<<"Player "<<i<<" won"<<endl;
+                        players.at(i).numBattlesWon++;
+                        for ( int i = 0; i < warDeck.warPile.size() ; i++ )
+                        {
+                            players.at(i).add( warDeck.Remove() );
+                        }
+                    }
+                    players.at(i).calculateFierceness();
+                    players.at(i).numBattlesPlayed++;
+                    
+                }
                 winnerOfBattle = true;
             }
+            else if ( indexOfWinner == -1 ) 
+            {
+                //put warDeck in lost and found pile
+                //play another battle
+                for ( int i = 0; i < warDeck.warPile.size(); i++ )
+                {
+                    bin.add( warDeck.Remove() );
+                }
+            }
+            cout<<"warDeck found"<<warDeck.warPile.size()<<endl;
+            cout<<"lostf found"<<bin.pile.size()<<endl;
+            // print out results
+            printEndResults( players );
+            
         }
-        
-        exit(0);
-        
-        // add battles to all players and wins to other players
-        // print out results
-        // end over when all players cards =0  or when all but one players cards equal 0
     }
 
     return 0;
 }
 
+
+void buildBigDeck( int numDecks, MegaDeck &bigDeck )
+{
+    for ( int i = 0; i < numDecks; i ++ )
+    {
+        Deck deck = Deck();
+        bigDeck.add( deck );
+    }
+    bigDeck.shuffle( numDecks );
+}
+
+void printEndResults ( vector<Player> players )
+{
+    for ( int i = 0; i < players.size(); i ++ )
+    {
+        cout<<"Player: "<<i<<" Fierceness = "<<setprecision(3)<<left << setw(5)<<players.at(i).handFierceness
+        <<" Cards = "<<players.at(i).pile.size()<<" Battles = "<<
+        players.at(i).numBattlesPlayed<<" Won = "<<players.at(i).numBattlesWon<<endl;
+    }
+}
+
+void playersAddCardWarPile( int &numPlayers, vector<Player> &players, WarPile &warDeck )
+{
+    for ( int i = 0; i < numPlayers; i++)
+    {
+        if ( players.at(i).pile.size() != 0 )//player is not out of cards
+        {
+            cout<<"FR "<<i<<endl;
+            warDeck.add( players.at(i).Remove() ) ;
+        }
+        else
+        {
+            cout<<"numPlayers-- found"<<endl;
+            numPlayers--;
+        }
+    }
+}
